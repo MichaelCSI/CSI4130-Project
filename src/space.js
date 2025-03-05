@@ -1,7 +1,9 @@
 ﻿import * as THREE from "three";
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { GUI } from "dat.gui";
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
 var camera, scene, renderer;
 const animateMixers = [];
@@ -13,8 +15,10 @@ function loadPlanets() {
 
     loader.load('./models/sun.glb', function (gltf) {
         console.log("Loaded Sun", gltf);
-        // gltf.scene.position.set(-10, 0, 0);
         gltf.scene.scale.set(0.5, 0.5, 0.5);
+        let sunMesh = gltf.scene.children[0].children[0].children[0].children[0].children[0].children[0];
+        sunMesh.material.emissive = new THREE.Color(0xFFA500);
+        sunMesh.material.emissiveIntensity = 60;
         scene.add(gltf.scene)
 
         // Add a PointLight at the Sun's position
@@ -25,16 +29,17 @@ function loadPlanets() {
     });
 
     loader.load('./models/various_planets.glb', function (gltf) {		
-		// Get individual planets and filter ones that do not have quaternion property for animation
-		planets = gltf.scene.children[0].children[0].children[0].children;
-		console.log("Loaded Planets from model", gltf, planets);
-
+		// Get planet list don't show gas planets (they look kinda funny)
+        planets = gltf.scene.children[0].children[0].children[0].children;
+        planets = planets.filter(planet => !["gas", "cloud"].some(keyword => planet.name.includes(keyword)));
+        console.log("Loaded planets: ", planets)
         // 5 Planets, we can do 5 positions along circle
 		for(let i = 0; i < planets.length; i++) {
             // Make every other "planet" a moon for the previous planet
 			let planet = planets[i];
-            let scaleFactor = Math.max(Math.random(), 0.4)
-            planet.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            let size = i * 0.3;
+            planet.scale.set(size, size, size);
+            planet.size = size;
             planet.orbitRadius = (i % 3 + 1) * 10;
 		}
 		scene.add(gltf.scene)
@@ -161,8 +166,20 @@ function init() {
 
 	var aspectRatio = window.innerWidth / window.innerHeight;
 	camera = new THREE.PerspectiveCamera(45, aspectRatio, 1, 1000);
-	camera.position.set(10, 10, 40);
+	camera.position.set(-10, 10, 40);
 	camera.lookAt(scene.position);
+
+    // Create the effect composer
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+
+    const bloomPass = new UnrealBloomPass(
+        new THREE.Vector2(window.innerWidth, window.innerHeight),
+        2,
+        0.4,
+        0.85
+    );
+    composer.addPass(bloomPass);
 
 	const orbitControls = new OrbitControls( camera, renderer.domElement );
 
@@ -195,14 +212,14 @@ function init() {
 
         for(let i = 0; i < planets.length; i++) {
             let orbitRadius = planets[i].orbitRadius;
-            let orbitSpeed = 10 / orbitRadius;
+            let orbitSpeed = Math.sqrt(20 * planets[i].size / orbitRadius)
             planets[i].position.x = Math.cos(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
             planets[i].position.z = Math.sin(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
         }
 	
 		orbitControls.update();
 
-		renderer.render(scene, camera);
+        composer.render();
 	}
 }
 
