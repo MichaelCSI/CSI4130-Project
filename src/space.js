@@ -8,6 +8,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 var camera, scene, renderer;
 const animateMixers = [];
 
+var sun;
 var planets = [];
 
 function loadPlanets() {
@@ -15,11 +16,12 @@ function loadPlanets() {
 
     loader.load('./models/sun.glb', function (gltf) {
         console.log("Loaded Sun", gltf);
-        gltf.scene.scale.set(0.5, 0.5, 0.5);
-        let sunMesh = gltf.scene.children[0].children[0].children[0].children[0].children[0].children[0];
+        sun = gltf.scene;
+        sun.scale.set(0.5, 0.5, 0.5);
+        let sunMesh = sun.children[0].children[0].children[0].children[0].children[0].children[0];
         sunMesh.material.emissive = new THREE.Color(0xFFA500);
         sunMesh.material.emissiveIntensity = 60;
-        scene.add(gltf.scene)
+        scene.add(sun)
 
         // Add a PointLight at the Sun's position
         const sunLight = new THREE.PointLight(0xFFA500, 5000, 1000);
@@ -57,26 +59,19 @@ function loadPlanets() {
     });
 }
 
-
-
-// Spiral galaxies (space is the big, background one, spiral is the mini galaxy)
-var spaceParticles;
-var spiralParticles;
-
 const galaxyParameters = {};
 galaxyParameters.count = 5_000;
 galaxyParameters.size = 0.01;
-galaxyParameters.radius = 40;
+galaxyParameters.radius = 60;
 galaxyParameters.branches = 3;
 galaxyParameters.spin = 1.2;
 galaxyParameters.rotationVelocity = 0.4;
 galaxyParameters.randomnessPower = 3;
-// galaxyParameters.spiralHeight = 0.5;
 galaxyParameters.spiralHeight = 0;
-galaxyParameters.insideColor = '#1b3984';
+galaxyParameters.insideColor = '#ffffff';
 galaxyParameters.outsideColor = '#ffffff';
 
-function createGalaxy(scaleY) {
+function createGalaxy(scaleX, scaleY, scaleZ) {
     let particlesGeometry = new THREE.BufferGeometry()
     let particlesMaterial = new THREE.PointsMaterial({
         size: galaxyParameters.size,
@@ -110,16 +105,13 @@ function createGalaxy(scaleY) {
         // Higher randomnessPower = denser around branches, distribute them across both sides (+/-) of axis
         const randomX = Math.pow(Math.random(), galaxyParameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1);
         // Scale Y when we want a broader galaxy star system rather than say a spiral milky way kinda thing
-        const randomY = scaleY ? 
-            Math.pow(Math.random() * 20, 1) * (Math.random() < 0.5 ? 1 : -1)
-            :
-            Math.pow(Math.random(), galaxyParameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1);
+        const randomY = Math.pow(Math.random(), galaxyParameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1);
         const randomZ = Math.pow(Math.random(), galaxyParameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1);
 
         // X, Y, Z ... Use cos/sin to form circle based on angles/radius/random offset
-        positions[i3] = Math.cos(branchAngle + spinAngle) * radius + randomX;
-        positions[i3 + 1] = randomY + radius * galaxyParameters.spiralHeight + 3;
-        positions[i3 + 2] = Math.sin(branchAngle + spinAngle) * radius + randomZ;
+        positions[i3] = scaleX * Math.cos(branchAngle + spinAngle) * radius + randomX;
+        positions[i3 + 1] = scaleY * randomY + radius * galaxyParameters.spiralHeight + 3;
+        positions[i3 + 2] = scaleZ * Math.sin(branchAngle + spinAngle) * radius + randomZ;
 
 
         // PARTICLE COLOR
@@ -184,15 +176,9 @@ function init() {
 	const orbitControls = new OrbitControls( camera, renderer.domElement );
 
 	loadPlanets();
-    // spaceParticles = createGalaxy(true);
-    galaxyParameters.count = 5_000;
-    galaxyParameters.radius = 8;
-    galaxyParameters.outsideColor = '#bf40bf'
-    galaxyParameters.randomnessPower = 5
-    spiralParticles = createGalaxy(false);
-    spiralParticles.position.set(30, -5, -20);
-    spiralParticles.rotation.x = Math.PI / 8;
-    spiralParticles.rotation.z = Math.PI / 8;
+    let lineParticles = createGalaxy(1, 5, 0.2);
+    lineParticles.position.set(15, -15, -50);
+    lineParticles.rotation.x = - Math.PI / 15;
 
 	// render the scene
 	renderer.render(scene, camera);
@@ -208,7 +194,7 @@ function init() {
 
 		animateMixers.forEach((mixer) => mixer.update(delta));
 
-        spiralParticles.rotation.y += galaxyParameters.rotationVelocity * 0.001;
+        lineParticles.rotation.y += galaxyParameters.rotationVelocity * 0.00001;
 
         for(let i = 0; i < planets.length; i++) {
             let orbitRadius = planets[i].orbitRadius;
@@ -216,6 +202,9 @@ function init() {
             planets[i].position.x = Math.cos(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
             planets[i].position.z = Math.sin(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
         }
+
+        // Rotation and added bloom gives fluctuating effect
+        sun.rotation.y -= delta / 25;
 	
 		orbitControls.update();
 
