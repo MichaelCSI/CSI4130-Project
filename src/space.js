@@ -18,7 +18,7 @@ function loadPlanets() {
         scene.add(gltf.scene)
 
         // Add a PointLight at the Sun's position
-        const sunLight = new THREE.PointLight(0xffffaa, 1000, 1000);
+        const sunLight = new THREE.PointLight(0xFFA500, 5000, 1000);
         scene.add(sunLight);
     }, undefined, function (error) {
         console.error("Error loading Sun:", error);
@@ -30,13 +30,12 @@ function loadPlanets() {
 		console.log("Loaded Planets from model", gltf, planets);
 
         // 5 Planets, we can do 5 positions along circle
-		for(let i = 0; i < planets.length; i+= 2) {
+		for(let i = 0; i < planets.length; i++) {
             // Make every other "planet" a moon for the previous planet
 			let planet = planets[i];
-            let moon = planets[i+1];
-            planet.scale.set(1.5, 1.5, 1.5);
-            moon.position.set(i * 5 + 1, 2, 0);
-            moon.scale.set(0.1, 0.1, 0.1);
+            let scaleFactor = Math.max(Math.random(), 0.4)
+            planet.scale.set(scaleFactor, scaleFactor, scaleFactor);
+            planet.orbitRadius = (i % 3 + 1) * 10;
 		}
 		scene.add(gltf.scene)
 
@@ -148,17 +147,27 @@ function init() {
 
 	// All drawing will be organized in a scene graph
 	scene = new THREE.Scene();
-	scene.background = new THREE.Color( 0x000000 );
+	// scene.background = new THREE.Color( 0x000000 );
+    scene.background = new THREE.CubeTextureLoader()
+	.setPath( './images/' )
+	.load( [
+				'px.png',
+				'nx.png',
+				'py.png',
+				'ny.png',
+				'pz.png',
+				'nz.png'
+			] );
 
 	var aspectRatio = window.innerWidth / window.innerHeight;
 	camera = new THREE.PerspectiveCamera(45, aspectRatio, 1, 1000);
-	camera.position.z = 40;
+	camera.position.set(10, 10, 40);
 	camera.lookAt(scene.position);
 
 	const orbitControls = new OrbitControls( camera, renderer.domElement );
 
 	loadPlanets();
-    spaceParticles = createGalaxy(true);
+    // spaceParticles = createGalaxy(true);
     galaxyParameters.count = 5_000;
     galaxyParameters.radius = 8;
     galaxyParameters.outsideColor = '#bf40bf'
@@ -171,18 +180,6 @@ function init() {
 	// render the scene
 	renderer.render(scene, camera);
 
-	// Setup the control gui
-	// var controlsGUI = new (function () {
-	// 	this.cameraZ = 1;
-	// 	this.redraw = function () {
-	// 		camera.position.z = this.cameraZ;
-	// 		camera.updateWorldMatrix();
-	// 	};
-	// })();
-
-	// var gui = new GUI();
-	// gui.add(controlsGUI, "cameraZ", 40, 50).onChange(controls.redraw);
-    
     let elapsedTime = 0;
 	render();
 	function render() {
@@ -194,12 +191,13 @@ function init() {
 
 		animateMixers.forEach((mixer) => mixer.update(delta));
 
-        spaceParticles.rotation.y += galaxyParameters.rotationVelocity * 0.0001;
         spiralParticles.rotation.y += galaxyParameters.rotationVelocity * 0.001;
 
         for(let i = 0; i < planets.length; i++) {
-            planets[i].position.x = Math.cos(elapsedTime + i * 2 * Math.PI / planets.length) * 10;
-            planets[i].position.z = Math.sin(elapsedTime + i * 2 * Math.PI / planets.length) * 10;
+            let orbitRadius = planets[i].orbitRadius;
+            let orbitSpeed = 10 / orbitRadius;
+            planets[i].position.x = Math.cos(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
+            planets[i].position.z = Math.sin(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
         }
 	
 		orbitControls.update();
