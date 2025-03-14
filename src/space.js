@@ -22,8 +22,8 @@ function loadPlanets() {
         sun.scale.set(0.5, 0.5, 0.5);
         let sunMesh = sun.children[0].children[0].children[0].children[0].children[0].children[0];
         sunMesh.material.emissive = new THREE.Color(0xFFA500);
-        sunMesh.material.emissiveIntensity = 60;
-        scene.add(sun)
+        sunMesh.material.emissiveIntensity = 200;
+        scene.add(sun);
 
         // Add a PointLight at the Sun's position
         const sunLight = new THREE.PointLight(0xFFA500, 5000, 1000);
@@ -64,17 +64,34 @@ function loadPlanets() {
 function loadSpaceShip(cameraPosition) {
     const loader = new GLTFLoader();
 
-    loader.load('./models/sci-fi_spaceship_corridor.glb', function (gltf) {
-        console.log("Loaded Ship", gltf);
-        let ship = gltf.scene.children[0];
-        ship.scale.set(0.3, 0.3, 0.3);
-        ship.rotation.set(Math.PI / 2.3, Math.PI * 0.99, -Math.PI / 14)
-        ship.position.set(cameraPosition.x + 0.2, cameraPosition.y - 0.5, cameraPosition.z);
-        scene.add(ship)
+    loader.load('./models/scifi_wall_with_window.glb', function (gltf) {
+        console.log("Loaded Window", gltf);
+        
+        let window = gltf.scene.children[0];
+
+        // Create a parent object to hold the mesh and center it (initial rotation axis was weird)
+        const wrapper = new THREE.Group();
+        wrapper.add(window);
+
+        // Apply transformations to the wrapper
+        wrapper.rotation.set(0.05, Math.PI / 2.32, -0.1);
+        wrapper.scale.set(0.45, 0.45, 0.45)
+        wrapper.position.set(cameraPosition.x + 0.5, cameraPosition.y - 1.6, cameraPosition.z - 2);
+        scene.add(wrapper);
+
+        // Add light (should seem like we are in spaceship)
+        const light = new THREE.PointLight(0xadd8e6, 20, 50); // 50 is the distance limit
+        light.position.set(
+            cameraPosition.x,
+            cameraPosition.y,
+            cameraPosition.z
+        );
+        scene.add(light);
     }, undefined, function (error) {
-        console.error("Error loading ship:", error);
+        console.error("Error loading Window:", error);
     });
 }
+
 
 // initialization of Three.js
 function init() {
@@ -107,12 +124,11 @@ function init() {
     // Create the effect composer
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-
     const bloomPass = new UnrealBloomPass(
         new THREE.Vector2(window.innerWidth, window.innerHeight),
-        2,
-        0.4,
-        0.85
+        0.2,
+        0.5,
+        0.8
     );
     composer.addPass(bloomPass);
 
@@ -175,7 +191,7 @@ function init() {
             // Update planetary orbits
             for(let i = 0; i < planets.length; i++) {
                 let orbitRadius = planets[i].orbitRadius;
-                let orbitSpeed = Math.sqrt(20 * planets[i].size / orbitRadius)
+                let orbitSpeed = Math.sqrt(10 * planets[i].size / orbitRadius)
                 planets[i].position.x = Math.cos(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
                 planets[i].position.z = Math.sin(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
             }
