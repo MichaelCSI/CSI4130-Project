@@ -11,43 +11,31 @@ body
     font-family: 'Orbitron', sans-serif;
 }
 
-.button
-{
-    position: absolute;
-    top: 50%;
-    left: 50%;
-}
-
 .button .label
 {
     position: absolute;
-    top: -20px;
-    left: -20px;
-    width: 100px;
-    height: 50px;
-    background: #05edf577;
+    padding: 10px;
+    top: 10%;
+    height: 5vh;
+    width: 15vh;
+    font-size: 2.5vh;
     border: 1px solid ivory;
+    border-radius: 10px;
     color: ivory;
     text-align: center;
-    line-height: 40px;
-    font-weight: 100;
-    font-size: 14px;
     cursor: pointer;
+    box-shadow: 0 0 8px rgb(131, 240, 252), 0 0 8px rgba(131, 240, 252), 0 0 8px rgba(131, 240, 252);
 }
 
 .button .text
 {
     position: absolute;
-    top: -20px;
-    left: 100px;
-    width: 250px;
-    height: 100px;
-    padding: 5px;
+    top: 60%;
+    max-width: 250px;
     border-radius: 4px;
-    background: black;
     border: 1px solid ivory;
+    padding: 5px;
     color: ivory;
-    font-size: 14px;
     opacity: 0;
     transition: opacity 0.3s;
     pointer-events: none;
@@ -56,4 +44,23 @@ body
 .button:hover .text
 {
     opacity: 1;
+}
+
+.audio { 
+    color: ivory;
+    font-size: 2em;
+}
+
+.buttonContainer {
+    position: absolute;
+    left: 24%;
+    width: 50%;
+    height: 20%;
+    display: flex;
+    flex-direction: row;
+    gap: 5vh;
+    justify-content: center;
+}
+.buttonContainer > * {
+    flex-basis: 100px;
 }

@@ -4,6 +4,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { createGalaxy, galaxyParameters } from './galaxy.js';
+import { toggleAudio } from "./music.js";
 
 var camera, scene, renderer;
 const animateMixers = [];
@@ -16,6 +17,7 @@ var planets = [];
 function loadModels(cameraPosition) {
     const loader = new GLTFLoader();
 
+    // Sun
     loader.load('./models/sun.glb', function (gltf) {
         console.log("Loaded Sun", gltf);
         sun = gltf.scene;
@@ -32,6 +34,7 @@ function loadModels(cameraPosition) {
         console.error("Error loading Sun:", error);
     });
 
+    // Planets orbitting sun
     loader.load('./models/various_planets.glb', function (gltf) {		
 		// Get planet list don't show gas planets (they look kinda funny)
         planets = gltf.scene.children[0].children[0].children[0].children;
@@ -60,6 +63,7 @@ function loadModels(cameraPosition) {
         console.error("Error loading Planets:", error);
     });
 
+    // Our main ship window
     loader.load('./models/scifi_wall_with_window.glb', function (gltf) {
         console.log("Loaded Window", gltf);
         
@@ -96,6 +100,7 @@ function loadModels(cameraPosition) {
     });
 
 
+    // Glowing blue file icon on bottom left monitor
     loader.load('./models/sci_fi_monitor.glb', function (gltf) {
         console.log("Loaded Monitor (animation)", gltf);
         let monitor = gltf.scene;
@@ -113,6 +118,7 @@ function loadModels(cameraPosition) {
             }
         });
         
+        // Minor animation included with the icon
         const mixer = new THREE.AnimationMixer(monitor);
 		gltf.animations.forEach((clip) => {
 			const action = mixer.clipAction(clip);
@@ -123,20 +129,31 @@ function loadModels(cameraPosition) {
         console.error("Error loading Sun:", error);
     });
 
+    // Bottom left monitor with wires
     loader.load('./models/futuristic_screen.glb', function (gltf) {
-        console.log("Loaded Monitor", gltf);
+        console.log("Loaded Wired Monitor", gltf);
         let monitor = gltf.scene;
         monitor.rotation.set(0, -Math.PI / 2, 0);
         monitor.scale.set(0.2, 0.2, 0.2)
         monitor.position.set(cameraPosition.x - 0.5, cameraPosition.y - 1.5, cameraPosition.z - 2);
         scene.add(monitor);
+    }, undefined, function (error) {
+        console.error("Error loading Sun:", error);
+    });
 
-        const mixer = new THREE.AnimationMixer(monitor);
-		gltf.animations.forEach((clip) => {
-			const action = mixer.clipAction(clip);
-			action.play();
-		});
-		animateMixers.push(mixer);
+    // Top monitor for menu buttons
+    loader.load('./models/hanging_monitor.glb', function (gltf) {
+        console.log("Loaded Menu Monitor", gltf);
+        let monitor = gltf.scene;
+        monitor.rotation.set(-0.2, -0.05, -0.005);
+        monitor.scale.set(1.8, 1, 1)
+        monitor.position.set(cameraPosition.x + 0.37, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
+        scene.add(monitor);
+        monitor.traverse((obj) => {
+            if (obj.isMesh && obj.material) {
+                console.log(obj.material)
+            }
+        });
     }, undefined, function (error) {
         console.error("Error loading Sun:", error);
     });
@@ -156,7 +173,7 @@ function init() {
     // Set up scene with space background cube texture
 	scene = new THREE.Scene();
     scene.background = new THREE.CubeTextureLoader()
-	.setPath( './images/' )
+	.setPath( './images/cubemap/' )
 	.load( [
 				'px.png',
 				'nx.png',
@@ -192,35 +209,31 @@ function init() {
     lineParticles.rotation.x = - Math.PI / 15;
 
     // Action buttons
-    menuButtons = [
-        {
-            position: camera.position.clone().add(new THREE.Vector3(-0.7, 0.2, -1)),
-            element: document.querySelector('.button1')
-        },
-        {
-            position: camera.position.clone().add(new THREE.Vector3(-0.4, 0.3, -1)),
-            element: document.querySelector('.button2')
-        },
-        {
-            position: camera.position.clone().add(new THREE.Vector3(-0.5, 0, -1)),
-            element: document.querySelector('.button3')
-        }
-    ];
-    // Button positioning
-    updateButtonPositions();
+    menuButtons = {
+        button1: document.querySelector('.button1'),
+        button2: document.querySelector('.button2'),
+        button3: document.querySelector('.button3'),
+        audioButton: document.querySelector('.button4')
+    };
+
     // Button functionality
-    menuButtons[0].element.onclick = () => {
+    menuButtons.button1.onclick = () => {
         console.log(`Button 1 clicked!`);
         // Add your custom logic here or in another function/file
     };
-    menuButtons[1].element.onclick = () => {
+    menuButtons.button2.onclick = () => {
         console.log(`Button 2 clicked!`);
         // Add your custom logic here or in another function/file
     };
-    menuButtons[2].element.onclick = () => {
+    menuButtons.button3.onclick = () => {
         console.log(`Button 3 clicked!`);
         // Add your custom logic here or in another function/file
     };
+    const volumeIcon = menuButtons.audioButton.querySelector('.audio');
+    volumeIcon.onclick = () => {
+        toggleAudio(volumeIcon);
+    }
+
 
     let elapsedTime = 0;
 	render();
@@ -252,23 +265,10 @@ function init() {
 	}
 }
 
-function updateButtonPositions() {
-    menuButtons.forEach(button => {
-        const screenPosition = button.position.clone();
-        screenPosition.project(camera);
-
-        const translateX = (screenPosition.x * 0.5 + 0.5) * window.innerWidth;
-        const translateY = (-screenPosition.y * 0.5 + 0.5) * window.innerHeight;
-        
-        button.element.style.transform = `translate(${translateX}px, ${translateY}px)`;
-    });
-}
-
 function onResize() {
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 	renderer.setSize(window.innerWidth, window.innerHeight);
-    updateButtonPositions();
 }
 
 window.onload = init;
