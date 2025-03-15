@@ -13,7 +13,7 @@ var menuButtons;
 var sun;
 var planets = [];
 
-function loadPlanets(cameraPosition) {
+function loadModels(cameraPosition) {
     const loader = new GLTFLoader();
 
     loader.load('./models/sun.glb', function (gltf) {
@@ -86,6 +86,43 @@ function loadPlanets(cameraPosition) {
     }, undefined, function (error) {
         console.error("Error loading Window:", error);
     });
+
+
+    loader.load('./models/sci_fi_monitor.glb', function (gltf) {
+        console.log("Loaded Monitor animation", gltf);
+        let monitor = gltf.scene;
+        monitor.scale.set(1.5, 1.1, 1.2);
+        monitor.rotation.set(-0.2, 0, -0.01);
+        monitor.position.set(cameraPosition.x - 0.36, cameraPosition.y - 0.45, cameraPosition.z - 1.2);
+        scene.add(monitor);
+
+        const mixer = new THREE.AnimationMixer(monitor);
+		gltf.animations.forEach((clip) => {
+			const action = mixer.clipAction(clip);
+			action.play();
+		});
+		animateMixers.push(mixer);
+    }, undefined, function (error) {
+        console.error("Error loading Sun:", error);
+    });
+
+    loader.load('./models/futuristic_screen.glb', function (gltf) {
+        console.log("Loaded Monitor", gltf);
+        let monitor = gltf.scene;
+        monitor.rotation.set(0, -Math.PI / 2, 0);
+        monitor.scale.set(0.2, 0.2, 0.2)
+        monitor.position.set(cameraPosition.x - 0.5, cameraPosition.y - 1.5, cameraPosition.z - 2);
+        scene.add(monitor);
+
+        const mixer = new THREE.AnimationMixer(monitor);
+		gltf.animations.forEach((clip) => {
+			const action = mixer.clipAction(clip);
+			action.play();
+		});
+		animateMixers.push(mixer);
+    }, undefined, function (error) {
+        console.error("Error loading Sun:", error);
+    });
 }
 
 
@@ -130,7 +167,7 @@ function init() {
     renderer.render(scene, camera);
 
     // Load models
-	loadPlanets(camera.position);
+	loadModels(camera.position);
 
     // Create background particle galaxy
     let lineParticles = createGalaxy(scene, 1, 5, 0.2);
@@ -140,11 +177,11 @@ function init() {
     // Action buttons
     menuButtons = [
         {
-            position: camera.position.clone().add(new THREE.Vector3(-0.6, 0.2, -1)),
+            position: camera.position.clone().add(new THREE.Vector3(-0.7, 0.2, -1)),
             element: document.querySelector('.button1')
         },
         {
-            position: camera.position.clone().add(new THREE.Vector3(-0.4, 0.25, -1)),
+            position: camera.position.clone().add(new THREE.Vector3(-0.4, 0.3, -1)),
             element: document.querySelector('.button2')
         },
         {
