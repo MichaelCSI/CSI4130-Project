@@ -75,27 +75,44 @@ function loadModels(cameraPosition) {
         wrapper.position.set(cameraPosition.x + 0.5, cameraPosition.y - 1.6, cameraPosition.z - 2);
         scene.add(wrapper);
 
-        // Add light (should seem like we are in spaceship)
-        const light = new THREE.PointLight(0xadd8e6, 20, 50); // 50 is the distance limit
-        light.position.set(
-            cameraPosition.x,
-            cameraPosition.y,
-            cameraPosition.z
-        );
-        scene.add(light);
+        // Add lights on floor facing our window
+        [2, -2].forEach(xOffset => {
+            const spotLight = new THREE.SpotLight(0xffffff, 20, 10, Math.PI / 2, 0.1, 2);
+            spotLight.position.set(
+                wrapper.position.x + xOffset,
+                wrapper.position.y,
+                wrapper.position.z + 1
+            );
+            spotLight.target.position.set(
+                wrapper.position.x,
+                wrapper.position.y,
+                wrapper.position.z
+            );
+            scene.add(spotLight);
+            scene.add(spotLight.target);
+        });
     }, undefined, function (error) {
         console.error("Error loading Window:", error);
     });
 
 
     loader.load('./models/sci_fi_monitor.glb', function (gltf) {
-        console.log("Loaded Monitor animation", gltf);
+        console.log("Loaded Monitor (animation)", gltf);
         let monitor = gltf.scene;
         monitor.scale.set(1.5, 1.1, 1.2);
         monitor.rotation.set(-0.2, 0, -0.01);
         monitor.position.set(cameraPosition.x - 0.36, cameraPosition.y - 0.45, cameraPosition.z - 1.2);
         scene.add(monitor);
 
+        // Add stronger emission to monitor animation
+        monitor.traverse((obj) => {
+            if (obj.isMesh && obj.material) {
+                if (obj.material.emissive) {
+                    obj.material.emissiveIntensity = 5;
+                }
+            }
+        });
+        
         const mixer = new THREE.AnimationMixer(monitor);
 		gltf.animations.forEach((clip) => {
 			const action = mixer.clipAction(clip);
@@ -136,8 +153,8 @@ function init() {
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	container.appendChild(renderer.domElement);
 
+    // Set up scene with space background cube texture
 	scene = new THREE.Scene();
-    // Set space background cube texture
     scene.background = new THREE.CubeTextureLoader()
 	.setPath( './images/' )
 	.load( [
