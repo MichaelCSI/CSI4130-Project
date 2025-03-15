@@ -10,7 +10,7 @@ var camera, scene, renderer;
 const animateMixers = [];
 const clock = new THREE.Clock();
 
-var menuButtons;
+var menuButtons, monitor;
 var sun;
 var planets = [];
 
@@ -144,10 +144,10 @@ function loadModels(cameraPosition) {
     // Top monitor for menu buttons
     loader.load('./models/hanging_monitor.glb', function (gltf) {
         console.log("Loaded Menu Monitor", gltf);
-        let monitor = gltf.scene;
+        monitor = gltf.scene;
         monitor.rotation.set(-0.2, -0.05, -0.005);
-        monitor.scale.set(1.8, 1, 1)
-        monitor.position.set(cameraPosition.x + 0.37, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
+        monitor.scale.set(2.5, 1, 1)
+        monitor.position.set(cameraPosition.x + 0.4, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
         scene.add(monitor);
         monitor.traverse((obj) => {
             if (obj.isMesh && obj.material) {

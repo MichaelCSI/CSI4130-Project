@@ -1,8 +1,8 @@
 var currentAudio = null;
 const audioFiles = [
+    "./audio/lofi-piano-beat-305563.mp3",
     "./audio/lofi-295209.mp3",
-    "./audio/lofi-background-music-309034.mp3",
-    "./audio/lofi-piano-beat-305563.mp3"
+    "./audio/lofi-background-music-309034.mp3"
 ];
 
 export async function toggleAudio(volumeElement) {
@@ -12,7 +12,6 @@ export async function toggleAudio(volumeElement) {
         currentAudio.pause();
         volumeElement.classList.remove('fa-volume-high');
         volumeElement.classList.add('fa-volume-xmark');
-        console.log("PAUSE")
         return;
     }
 
