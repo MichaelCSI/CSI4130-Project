@@ -147,7 +147,7 @@ function loadModels(cameraPosition) {
         monitor = gltf.scene;
         monitor.rotation.set(-0.2, -0.05, -0.005);
         monitor.scale.set(2.5, 1, 1)
-        monitor.position.set(cameraPosition.x + 0.4, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
+        monitor.position.set(cameraPosition.x + 0.44, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
         scene.add(monitor);
         monitor.traverse((obj) => {
             if (obj.isMesh && obj.material) {
