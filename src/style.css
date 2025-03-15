@@ -25,12 +25,20 @@ body
     text-align: center;
     cursor: pointer;
     box-shadow: 0 0 8px rgb(131, 240, 252), 0 0 8px rgba(131, 240, 252), 0 0 8px rgba(131, 240, 252);
+    /* Gradient on hover */
+    background: linear-gradient(to bottom, black, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.2), rgb(131, 240, 252));
+    background-size: 100% 300%;
+    transition: background-position 0.5s ease-out;
+}
+.button:hover .label
+{
+    background-position: bottom;
 }
 
 .button .text
 {
     position: absolute;
-    top: 10vh;
+    top: 11vh;
     font-size: min(2.5vh, 18px);
     max-width: 250px;
     border-radius: 4px;
@@ -47,12 +55,14 @@ body
     opacity: 1;
 }
 
-.audio { 
+.audio 
+{ 
     color: ivory;
     font-size: 2em;
 }
 
-.buttonContainer {
+.buttonContainer 
+{
     position: absolute;
     left: 24%;
     width: 50%;
@@ -62,6 +72,7 @@ body
     gap: max(7vh, 40px);
     justify-content: center;
 }
-.buttonContainer > * {
+.buttonContainer > * 
+{
     flex-basis: min(15vh, 7vw);
 }
