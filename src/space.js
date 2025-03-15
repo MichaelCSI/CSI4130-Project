@@ -13,7 +13,7 @@ var menuButtons;
 var sun;
 var planets = [];
 
-function loadPlanets() {
+function loadPlanets(cameraPosition) {
     const loader = new GLTFLoader();
 
     loader.load('./models/sun.glb', function (gltf) {
@@ -59,10 +59,6 @@ function loadPlanets() {
     }, undefined, function (error) {
         console.error("Error loading Planets:", error);
     });
-}
-
-function loadSpaceShip(cameraPosition) {
-    const loader = new GLTFLoader();
 
     loader.load('./models/scifi_wall_with_window.glb', function (gltf) {
         console.log("Loaded Window", gltf);
@@ -131,48 +127,46 @@ function init() {
         0.8
     );
     composer.addPass(bloomPass);
+    renderer.render(scene, camera);
 
-    // Load sun/planets
-	loadPlanets();
-    // Load spaceship (glass window and background ship)
-    loadSpaceShip(camera.position);
+    // Load models
+	loadPlanets(camera.position);
+
     // Create background particle galaxy
     let lineParticles = createGalaxy(scene, 1, 5, 0.2);
     lineParticles.position.set(15, -15, -50);
     lineParticles.rotation.x = - Math.PI / 15;
 
-	// Render the scene
-	renderer.render(scene, camera);
-        // Action buttons
-        menuButtons = [
-            {
-                position: camera.position.clone().add(new THREE.Vector3(-0.6, 0.2, -1)),
-                element: document.querySelector('.button1')
-            },
-            {
-                position: camera.position.clone().add(new THREE.Vector3(-0.4, 0.25, -1)),
-                element: document.querySelector('.button2')
-            },
-            {
-                position: camera.position.clone().add(new THREE.Vector3(-0.5, 0, -1)),
-                element: document.querySelector('.button3')
-            }
-        ];
-        // Button positioning
-        updateButtonPositions();
-        // Button functionality
-        menuButtons[0].element.onclick = () => {
-            console.log(`Button 1 clicked!`);
-            // Add your custom logic here or in another function/file
-        };
-        menuButtons[1].element.onclick = () => {
-            console.log(`Button 2 clicked!`);
-            // Add your custom logic here or in another function/file
-        };
-        menuButtons[2].element.onclick = () => {
-            console.log(`Button 3 clicked!`);
-            // Add your custom logic here or in another function/file
-        };
+    // Action buttons
+    menuButtons = [
+        {
+            position: camera.position.clone().add(new THREE.Vector3(-0.6, 0.2, -1)),
+            element: document.querySelector('.button1')
+        },
+        {
+            position: camera.position.clone().add(new THREE.Vector3(-0.4, 0.25, -1)),
+            element: document.querySelector('.button2')
+        },
+        {
+            position: camera.position.clone().add(new THREE.Vector3(-0.5, 0, -1)),
+            element: document.querySelector('.button3')
+        }
+    ];
+    // Button positioning
+    updateButtonPositions();
+    // Button functionality
+    menuButtons[0].element.onclick = () => {
+        console.log(`Button 1 clicked!`);
+        // Add your custom logic here or in another function/file
+    };
+    menuButtons[1].element.onclick = () => {
+        console.log(`Button 2 clicked!`);
+        // Add your custom logic here or in another function/file
+    };
+    menuButtons[2].element.onclick = () => {
+        console.log(`Button 3 clicked!`);
+        // Add your custom logic here or in another function/file
+    };
 
     let elapsedTime = 0;
 	render();
