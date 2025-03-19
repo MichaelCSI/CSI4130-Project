@@ -5,7 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { createGalaxy, galaxyParameters } from './galaxy.js';
 import { toggleAudio } from "./music.js";
-import { updateBackground, animateWater } from "./locations.js";
+import { updateBackground, animateWater } from "./travel.js";
 
 var camera, scene, renderer;
 const animateMixers = [];
