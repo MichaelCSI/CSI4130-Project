@@ -47,7 +47,6 @@ body
     color: ivory;
     opacity: 0;
     transition: opacity 0.3s;
-    pointer-events: none;
 }
 
 .button:hover .text
@@ -75,4 +74,31 @@ body
 .buttonContainer > * 
 {
     flex-basis: min(15vh, 7vw);
+}
+
+
+.location
+{
+    padding-right: 10px;
+    font-size: 1em;
+}
+.location:hover
+{
+    cursor: pointer;
+}
+.water:hover
+{
+    color: rgb(0, 110, 255);
+}
+.tree:hover
+{
+    color: rgb(9, 179, 9);
+}
+.fire:hover
+{
+    color: rgb(237, 9, 9);
+}
+.space:hover
+{
+    color: rgb(243, 56, 240);
 }

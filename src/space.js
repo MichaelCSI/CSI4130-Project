@@ -5,6 +5,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { createGalaxy, galaxyParameters } from './galaxy.js';
 import { toggleAudio } from "./music.js";
+import { updateBackground, animateWater } from "./locations.js";
 
 var camera, scene, renderer;
 const animateMixers = [];
@@ -12,7 +13,9 @@ const clock = new THREE.Clock();
 
 var menuButtons, monitor;
 var sun;
-var planets = [];
+var planetScene, planets;
+
+var currentBackground = "space";
 
 function loadModels(cameraPosition) {
     const loader = new GLTFLoader();
@@ -36,8 +39,9 @@ function loadModels(cameraPosition) {
 
     // Planets orbitting sun
     loader.load('./models/various_planets.glb', function (gltf) {		
+        planetScene = gltf.scene;
 		// Get planet list don't show gas planets (they look kinda funny)
-        planets = gltf.scene.children[0].children[0].children[0].children;
+        planets = planetScene.children[0].children[0].children[0].children;
         planets = planets.filter(planet => !["gas", "cloud"].some(keyword => planet.name.includes(keyword)));
         console.log("Loaded planets: ", planets)
         // 5 Planets, we can do 5 positions along circle
@@ -49,7 +53,7 @@ function loadModels(cameraPosition) {
             planet.size = size;
             planet.orbitRadius = (i % 3 + 1) * 10;
 		}
-		scene.add(gltf.scene)
+		scene.add(planetScene);
 
 		const mixer = new THREE.AnimationMixer(gltf.scene);
 		gltf.animations.forEach((clip) => {
@@ -212,7 +216,7 @@ function init() {
     menuButtons = {
         button1: document.querySelector('.button1'),
         button2: document.querySelector('.button2'),
-        button3: document.querySelector('.button3'),
+        travelButton: document.querySelector('.button3'),
         audioButton: document.querySelector('.button4')
     };
 
@@ -225,10 +229,33 @@ function init() {
         console.log(`Button 2 clicked!`);
         // Add your custom logic here or in another function/file
     };
-    menuButtons.button3.onclick = () => {
-        console.log(`Button 3 clicked!`);
-        // Add your custom logic here or in another function/file
-    };
+
+    // Travel button (go do different locations)
+    const waterLocation = menuButtons.travelButton.querySelector('.water');
+    waterLocation.onclick = () => {
+        updateBackground(currentBackground, "water", scene, camera);
+        currentBackground = "water";
+        scene.remove(planetScene);
+    }
+    const treeLocation = menuButtons.travelButton.querySelector('.tree');
+    treeLocation.onclick = () => {
+        updateBackground(currentBackground, "tree", scene, camera);
+        currentBackground = "tree";
+        scene.remove(planetScene);
+    }
+    const fireLocation = menuButtons.travelButton.querySelector('.fire');
+    fireLocation.onclick = () => {
+        updateBackground(currentBackground, "fire", scene, camera);
+        currentBackground = "fire";
+        scene.remove(planetScene);
+    }
+    const spaceLocation = menuButtons.travelButton.querySelector('.space');
+    spaceLocation.onclick = () => {
+        updateBackground(currentBackground, "space", scene, camera);
+        currentBackground = "space";
+        scene.add(planetScene);
+    }
+
     const volumeIcon = menuButtons.audioButton.querySelector('.audio');
     volumeIcon.onclick = () => {
         toggleAudio(volumeIcon);
@@ -238,13 +265,13 @@ function init() {
     let elapsedTime = 0;
 	render();
 	function render() {
-		const delta = clock.getDelta() * 0.1;
+		const delta = clock.getDelta();
         elapsedTime += delta;
 
         // If sun and planets loaded, handle updates
         if(sun && planets) {
             // Each planet has an atmospheric animation, update it
-            animateMixers.forEach((mixer) => mixer.update(delta));
+            animateMixers.forEach((mixer) => mixer.update(delta * 0.1));
 
             // Update background galaxy (gradual rotation)
             lineParticles.rotation.y += galaxyParameters.rotationVelocity * 0.00001;
@@ -253,13 +280,19 @@ function init() {
             for(let i = 0; i < planets.length; i++) {
                 let orbitRadius = planets[i].orbitRadius;
                 let orbitSpeed = Math.sqrt(10 * planets[i].size / orbitRadius)
-                planets[i].position.x = Math.cos(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
-                planets[i].position.z = Math.sin(orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
+                planets[i].position.x = Math.cos(0.1 * orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
+                planets[i].position.z = Math.sin(0.1 * orbitSpeed * elapsedTime + i * 2 * Math.PI / planets.length) * orbitRadius;
             }
             // Rotation and added bloom gives fluctuating effect on sun
-            sun.rotation.y -= delta / 25;
+            sun.rotation.y -= 0.1 * delta / 25;
         }
 
+        // Update water scene (time uniform to animate water)
+        if(currentBackground.localeCompare("water") == 0) {
+            animateWater(elapsedTime);
+        }
+
+        // Render
         composer.render();
 		requestAnimationFrame(render);
 	}
