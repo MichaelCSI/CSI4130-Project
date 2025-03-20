@@ -5,14 +5,14 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { createGalaxy, galaxyParameters } from './galaxy.js';
 import { toggleAudio } from "./music.js";
-import { updateBackground, animateWater } from "./travel.js";
+import { updateBackground, animateScene } from "./travel.js";
 
 var camera, scene, renderer;
 const animateMixers = [];
 const clock = new THREE.Clock();
 
 var menuButtons, monitor;
-var sun;
+var sun, sunLight;
 var planetScene, planets;
 
 var currentBackground = "space";
@@ -31,7 +31,7 @@ function loadModels(cameraPosition) {
         scene.add(sun);
 
         // Add a PointLight at the Sun's position
-        const sunLight = new THREE.PointLight(0xFFA500, 5000, 1000);
+        sunLight = new THREE.PointLight(0xFFA500, 5000, 1000);
         scene.add(sunLight);
     }, undefined, function (error) {
         console.error("Error loading Sun:", error);
@@ -207,6 +207,10 @@ function init() {
     // Load models
 	loadModels(camera.position);
 
+    // Add basic ambient light
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+    scene.add(ambientLight);
+
     // Create background particle galaxy
     let lineParticles = createGalaxy(scene, 1, 5, 0.2);
     lineParticles.position.set(15, -15, -50);
@@ -236,24 +240,28 @@ function init() {
         updateBackground(currentBackground, "water", scene, camera);
         currentBackground = "water";
         scene.remove(planetScene);
+        scene.add(sun, sunLight);
     }
     const treeLocation = menuButtons.travelButton.querySelector('.tree');
     treeLocation.onclick = () => {
         updateBackground(currentBackground, "tree", scene, camera);
         currentBackground = "tree";
         scene.remove(planetScene);
+        scene.add(sun, sunLight);
     }
     const fireLocation = menuButtons.travelButton.querySelector('.fire');
     fireLocation.onclick = () => {
         updateBackground(currentBackground, "fire", scene, camera);
         currentBackground = "fire";
-        scene.remove(planetScene);
+        scene.remove(planetScene, sun);
+        scene.remove(sun, sunLight);
     }
     const spaceLocation = menuButtons.travelButton.querySelector('.space');
     spaceLocation.onclick = () => {
         updateBackground(currentBackground, "space", scene, camera);
         currentBackground = "space";
         scene.add(planetScene);
+        scene.add(sun, sunLight);
     }
 
     const volumeIcon = menuButtons.audioButton.querySelector('.audio');
@@ -287,9 +295,13 @@ function init() {
             sun.rotation.y -= 0.1 * delta / 25;
         }
 
-        // Update water scene (time uniform to animate water)
-        if(currentBackground.localeCompare("water") == 0) {
-            animateWater(elapsedTime);
+        // Update scene depending on current environment
+        if(currentBackground.localeCompare("water") == 0){
+            // Constant waves
+            animateScene(elapsedTime, 0);
+        } else if(currentBackground.localeCompare("fire") == 0) {
+            // Swaying lava and moving clouds (background image)
+            animateScene(0.3 * Math.sin(elapsedTime * 0.7), -0.4 * Math.sin(elapsedTime * 0.02));
         }
 
         // Render
