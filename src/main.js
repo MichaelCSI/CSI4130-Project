@@ -164,7 +164,6 @@ function loadModels(cameraPosition) {
     loader.load('./models/bob_lazar_ufo.glb', function (gltf) {
         console.log("Loaded UFO", gltf);
         ufo = gltf.scene;
-        scene.add(ufo);
     }, undefined, function (error) {
         console.error("Error loading Sun:", error);
     });
@@ -239,6 +238,7 @@ function init() {
                 audio.play();
             }, 800)
         }
+        scene.add(ufo);
         callAlien = true;
     };
     menuButtons.stars.onclick = () => {
