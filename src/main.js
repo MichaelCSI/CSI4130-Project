@@ -14,9 +14,11 @@ const clock = new THREE.Clock();
 var menuButtons, monitor;
 var sun, sunLight;
 var planetScene, planets;
+var ufo;
 
 var currentBackground = "space";
 var starClicked = false;
+var callAlien = false;
 
 function loadModels(cameraPosition) {
     const loader = new GLTFLoader();
@@ -154,11 +156,15 @@ function loadModels(cameraPosition) {
         monitor.scale.set(2.5, 1, 1)
         monitor.position.set(cameraPosition.x + 0.44, cameraPosition.y + 0.02, cameraPosition.z - 1.5);    
         scene.add(monitor);
-        monitor.traverse((obj) => {
-            if (obj.isMesh && obj.material) {
-                console.log(obj.material)
-            }
-        });
+    }, undefined, function (error) {
+        console.error("Error loading Sun:", error);
+    });
+
+    // Alien UFO
+    loader.load('./models/bob_lazar_ufo.glb', function (gltf) {
+        console.log("Loaded UFO", gltf);
+        ufo = gltf.scene;
+        scene.add(ufo);
     }, undefined, function (error) {
         console.error("Error loading Sun:", error);
     });
@@ -219,16 +225,21 @@ function init() {
 
     // Action buttons
     menuButtons = {
-        button1: document.querySelector('.button1'),
+        alien: document.querySelector('.button1'),
         stars: document.querySelector('.button2'),
         travelButton: document.querySelector('.button3'),
         audioButton: document.querySelector('.button4')
     };
 
     // Button functionality
-    menuButtons.button1.onclick = () => {
-        console.log(`Button 1 clicked!`);
-        // Add your custom logic here or in another function/file
+    menuButtons.alien.onclick = () => {
+        if(!callAlien) {
+            const audio = new Audio("./audio/alien.mp3");
+            setTimeout(() => {
+                audio.play();
+            }, 800)
+        }
+        callAlien = true;
     };
     menuButtons.stars.onclick = () => {
         starClicked = !starClicked;
@@ -287,6 +298,7 @@ function init() {
 
     let elapsedTime = 0;
     let starOffset = new THREE.Vector3(0, 0, camera.position.z - 100);
+    let alienTime = 0;
 	render();
 	function render() {
 		const delta = clock.getDelta();
@@ -303,31 +315,32 @@ function init() {
             starOffset = new THREE.Vector3(Math.random() * 50, Math.random() * 5, camera.position.z - 100);
             star.position.z = starOffset.z;
             // Reset old positions
-            for (let i = 0; i < trailPositions.length; i++) {
+            for (let i = 0; i < trailLength * 3; i++) {
+                // This will log NaN attribute error but does achieve what we want
+                // Possible TODO: Find another way to not have previous trail connect to new one
                 trailPositions[i] = NaN;
             }
+        } else {
+            star.position.x = 12 * Math.sin(starFrequency) + starOffset.x;
+            star.position.y = 4 * Math.cos(starFrequency) + starOffset.y;
+            // Update x, y, z positions of each trail point position (shift and add newest position)
+            for (let i = 0; i < trailLength - 1; i++) {
+                trailPositions[i * 3] = trailPositions[(i + 1) * 3];
+                trailPositions[i * 3 + 1] = trailPositions[(i + 1) * 3 + 1];
+                trailPositions[i * 3 + 2] = trailPositions[(i + 1) * 3 + 2];
+            }
+            trailPositions[(trailLength - 1) * 3] = star.position.x;
+            trailPositions[(trailLength - 1) * 3 + 1] = star.position.y;
+            trailPositions[(trailLength - 1) * 3 + 2] = star.position.z;
             trailGeometry.attributes.position.needsUpdate = true;
         }
-        star.position.x = 12 * Math.sin(starFrequency) + starOffset.x;
-        star.position.y = 4 * Math.cos(starFrequency) + starOffset.y;
-        // Update x, y, z positions of each trail point position (shift and add newest position)
-        for (let i = 0; i < trailLength - 1; i++) {
-            trailPositions[i * 3] = trailPositions[(i + 1) * 3];
-            trailPositions[i * 3 + 1] = trailPositions[(i + 1) * 3 + 1];
-            trailPositions[i * 3 + 2] = trailPositions[(i + 1) * 3 + 2];
-        }
-        trailPositions[(trailLength - 1) * 3] = star.position.x;
-        trailPositions[(trailLength - 1) * 3 + 1] = star.position.y;
-        trailPositions[(trailLength - 1) * 3 + 2] = star.position.z;
-        trailGeometry.attributes.position.needsUpdate = true;
+
+
 
         // If sun and planets loaded, handle updates
         if(sun && planets) {
             // Each planet has an atmospheric animation, update it
             animateMixers.forEach((mixer) => mixer.update(delta * 0.1));
-
-            // Update background galaxy (gradual rotation)
-            lineParticles.rotation.y += galaxyParameters.rotationVelocity * 0.00001;
 
             // Update planetary orbits
             for(let i = 0; i < planets.length; i++) {
@@ -340,6 +353,7 @@ function init() {
             sun.rotation.y -= 0.1 * delta / 25;
         }
 
+
         // Update scene depending on current environment
         if(currentBackground.localeCompare("water") == 0){
             // Constant waves
@@ -347,6 +361,29 @@ function init() {
         } else if(currentBackground.localeCompare("fire") == 0) {
             // Swaying lava and moving clouds (background image)
             animateScene(0.3 * Math.sin(elapsedTime * 0.7), -0.4 * Math.sin(elapsedTime * 0.02));
+        }
+
+        // Update alien/UFO position and rotation (flies towards us with spinning wobble effect)
+        if(ufo && callAlien) {
+            alienTime += 0.2 * delta;
+            // For Z, use Sin function that hangs at peak and speeds up towards troughs
+            // This modified sin curves lead to a speedy approach, slow hover in front of camera, then speedy flying away
+            let alienZ = (camera.position.z - 3) * Math.pow(Math.sin(alienTime), 0.3);
+            let alienX = (camera.position.x - 2) + 6 * Math.sin(alienTime / 2);
+            // Our modified sin curve is not always defined (not continuous)
+            // Stop our elliptical position curve once it completes a half cycle on [0, PI]
+            if(!alienZ) {
+                callAlien = false;
+                alienTime = 0;
+                ufo.scale.set(0, 0, 0);
+            }
+            if(callAlien) {
+                ufo.position.set(alienX, camera.position.y - 1, alienZ);
+                let shipScale = alienZ / (camera.position.z - 3);
+                ufo.scale.set(shipScale, shipScale, shipScale);
+            }
+            ufo.rotation.y = -2 * elapsedTime;
+            ufo.rotation.x = 0.1 * Math.sin(elapsedTime);
         }
 
         // Render

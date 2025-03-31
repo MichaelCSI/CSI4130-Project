@@ -1,3 +1,7 @@
 # CSI4130-Project
 
-Run command: "npx vite src" from "CSI4130 Project" directory (main project directory)
+
+In the project directory "CSI4130 Project" (main project directory)
+- Install dependencies with command "npm install"
+- You will also need vite installed
+- To run, use command "npx vite src"
