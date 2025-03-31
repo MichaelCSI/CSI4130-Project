@@ -16,6 +16,7 @@ var sun, sunLight;
 var planetScene, planets;
 
 var currentBackground = "space";
+var starClicked = false;
 
 function loadModels(cameraPosition) {
     const loader = new GLTFLoader();
@@ -219,7 +220,7 @@ function init() {
     // Action buttons
     menuButtons = {
         button1: document.querySelector('.button1'),
-        button2: document.querySelector('.button2'),
+        stars: document.querySelector('.button2'),
         travelButton: document.querySelector('.button3'),
         audioButton: document.querySelector('.button4')
     };
@@ -229,9 +230,8 @@ function init() {
         console.log(`Button 1 clicked!`);
         // Add your custom logic here or in another function/file
     };
-    menuButtons.button2.onclick = () => {
-        console.log(`Button 2 clicked!`);
-        // Add your custom logic here or in another function/file
+    menuButtons.stars.onclick = () => {
+        starClicked = !starClicked;
     };
 
     // Travel button (go do different locations)
@@ -269,12 +269,57 @@ function init() {
         toggleAudio(volumeIcon);
     }
 
+    // Create Shooting Star (Small Sphere)
+    const starGeometry = new THREE.SphereGeometry(0.01, 16, 16);
+    const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const star = new THREE.Mesh(starGeometry, starMaterial);
+    scene.add(star);
+
+    // Trail setup
+    const trailLength = 7;
+    const trailPositions = new Float32Array(trailLength * 3);
+    const trailGeometry = new THREE.BufferGeometry();
+    trailGeometry.setAttribute('position', new THREE.BufferAttribute(trailPositions, 3));
+    const trailMaterial = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true });
+    const trail = new THREE.Line(trailGeometry, trailMaterial);
+    scene.add(trail);
+
 
     let elapsedTime = 0;
+    let starOffset = new THREE.Vector3(0, 0, camera.position.z - 100);
 	render();
 	function render() {
 		const delta = clock.getDelta();
         elapsedTime += delta;
+
+        // Only show star in it's left-right motion portion and it has been toggled (button clicked)
+        let starFrequency = elapsedTime * 4;
+        const visibilityFactor = starClicked ? 0.8 * Math.max(0, Math.sin(starFrequency + Math.PI / 2)) : 0;
+        starMaterial.emissiveIntensity = visibilityFactor * 2;
+        trailMaterial.opacity = visibilityFactor;
+
+        // If opacity is 0, shift star to new location (simulates many shooting stars)
+        if(trailMaterial.opacity == 0) {
+            starOffset = new THREE.Vector3(Math.random() * 50, Math.random() * 5, camera.position.z - 100);
+            star.position.z = starOffset.z;
+            // Reset old positions
+            for (let i = 0; i < trailPositions.length; i++) {
+                trailPositions[i] = NaN;
+            }
+            trailGeometry.attributes.position.needsUpdate = true;
+        }
+        star.position.x = 12 * Math.sin(starFrequency) + starOffset.x;
+        star.position.y = 4 * Math.cos(starFrequency) + starOffset.y;
+        // Update x, y, z positions of each trail point position (shift and add newest position)
+        for (let i = 0; i < trailLength - 1; i++) {
+            trailPositions[i * 3] = trailPositions[(i + 1) * 3];
+            trailPositions[i * 3 + 1] = trailPositions[(i + 1) * 3 + 1];
+            trailPositions[i * 3 + 2] = trailPositions[(i + 1) * 3 + 2];
+        }
+        trailPositions[(trailLength - 1) * 3] = star.position.x;
+        trailPositions[(trailLength - 1) * 3 + 1] = star.position.y;
+        trailPositions[(trailLength - 1) * 3 + 2] = star.position.z;
+        trailGeometry.attributes.position.needsUpdate = true;
 
         // If sun and planets loaded, handle updates
         if(sun && planets) {
