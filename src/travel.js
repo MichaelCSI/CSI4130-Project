@@ -2,6 +2,7 @@ import waterVert from './shaders/waterVert';
 import waterFrag from './shaders/waterFrag';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
+import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
 
 var shaderGeometry, shaderMaterial, shaderMesh;
 var backgroundTexture, backgroundMaterial, backgroundGeometry, backgroundMesh;
@@ -9,34 +10,32 @@ var backgroundTexture, backgroundMaterial, backgroundGeometry, backgroundMesh;
 var volcano;
 var volcanoLight;
 
-
-
+var treeObjects = [];
 
 export function updateBackground(oldBG, newBG, scene, camera) {
     if(oldBG.localeCompare("water") == 0) {
         resetWater(scene);
     } else if (oldBG.localeCompare("tree") == 0) {
-        // ...
+        resetTree(scene);
     } else if(oldBG.localeCompare("fire") == 0) {
         resetFire(scene);
     }
 
+
     if(newBG.localeCompare("water") == 0) {
         createWaterScene(scene, camera);
     } else if(newBG.localeCompare("tree") == 0) {
-        // ...
+        createTreeScene(scene, camera);
     } else if(newBG.localeCompare("fire") == 0) {
         createFireScene(scene, camera);
     }
 }
+
 export function animateScene(shaderTime, backgroundTime) {
     shaderMaterial.uniforms.uTime.value = shaderTime;
     backgroundMesh.rotation.z = backgroundTime;
 }
 
-
-
-// Water scene
 function createWaterScene(scene, camera) {
     // Use a simple plane with the water shaders to create an ocean/body of water
     shaderGeometry = new THREE.PlaneGeometry(80, 40, 1024, 512);
@@ -71,22 +70,19 @@ function createWaterScene(scene, camera) {
     backgroundMaterial = new THREE.MeshBasicMaterial({ map: backgroundTexture, side: THREE.DoubleSide });
     backgroundGeometry = new THREE.PlaneGeometry(80, 60);
     backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial);
-    backgroundMesh.position.set(camera.position.x + 20, camera.position.y, camera.position.z -50);
+    backgroundMesh.position.set(camera.position.x + 20, camera.position.y, camera.position.z - 50);
     scene.add(backgroundMesh);
 }
+
 function resetWater(scene) {
     scene.remove(shaderMesh);
     shaderGeometry.dispose();
     shaderMaterial.dispose();
-    scene.remove(backgroundMesh)
+    scene.remove(backgroundMesh);
     backgroundTexture.dispose();
     backgroundMaterial.dispose();
     backgroundGeometry.dispose();
 }
-
-
-
-
 // Fire/Volcano Scene
 function createFireScene(scene) {
     const loader = new GLTFLoader();
@@ -105,7 +101,7 @@ function createFireScene(scene) {
     volcanoLight = new THREE.PointLight(0xFF4500, 8000, 100);
     volcanoLight.position.set(5, -4, -20);
     scene.add(volcanoLight);
-    
+
     // Use a simple plane with the water shaders (different parameters for lava)
     shaderGeometry = new THREE.PlaneGeometry(40, 40, 400, 400);
     shaderMaterial = new THREE.ShaderMaterial({
@@ -144,6 +140,7 @@ function createFireScene(scene) {
     backgroundMesh.position.set(20, -20, -50);
     scene.add(backgroundMesh);
 }
+
 function resetFire(scene) {
     scene.remove(volcano);
     scene.remove(volcanoLight);
@@ -154,4 +151,79 @@ function resetFire(scene) {
     backgroundTexture.dispose();
     backgroundMaterial.dispose();
     backgroundGeometry.dispose();
+}
+
+function createTreeScene(scene, camera) {
+
+    const width = 80, height = 40, segmentsW = 100, segmentsH = 50;
+    const groundGeo = new THREE.PlaneGeometry(width, height, segmentsW, segmentsH);
+
+    // Distort vertices with Perlin noise to simulate texture
+    const noise = new ImprovedNoise();
+    const perlinZ = Math.random() * 100;
+    for (let i = 0; i < groundGeo.attributes.position.count; i++) {
+        const x = groundGeo.attributes.position.getX(i);
+        const y = groundGeo.attributes.position.getY(i);
+        const noiseVal = noise.noise(x * 5, y * 5, perlinZ); //frequency
+        const z = noiseVal * 0.3; // bumpiness
+        groundGeo.attributes.position.setZ(i, z);
+    }
+    groundGeo.computeVertexNormals();
+
+    const groundMat = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 1.75;
+    ground.rotation.z = -Math.PI / 3;
+    ground.position.set(camera.position.x, camera.position.y - 2.5, camera.position.z - 5);
+    ground.receiveShadow = true;
+    scene.add(ground);
+    treeObjects.push(ground);
+
+    const loader = new GLTFLoader();
+
+    loader.load('./models/pine_tree.glb', (gltf) => {
+        const baseTree = gltf.scene;
+        baseTree.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+            }
+        });
+
+        const defaultPos = new THREE.Vector3(-7, 7, 30);
+
+        const tree = baseTree.clone();
+        tree.position.copy(defaultPos);
+        tree.scale.set(0.005, 0.005, 0.005);
+        tree.rotation.y = Math.random() * Math.PI * 2;
+        scene.add(tree);
+        treeObjects.push(tree);
+
+        const count = 120;
+        const radius = 8;
+
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * radius;
+            const xOffset = Math.cos(angle) * dist;
+            const zOffset = Math.sin(angle) * dist;
+            const yAdjustment = -0.05 * xOffset + 7 * (zOffset / 30);
+
+            const treeClone = baseTree.clone();
+            treeClone.position.set(
+                defaultPos.x + xOffset,
+                defaultPos.y + yAdjustment,
+                defaultPos.z + zOffset
+            );
+            treeClone.scale.set(0.005, 0.005, 0.005);
+            treeClone.rotation.y = Math.random() * Math.PI * 2;
+            scene.add(treeClone);
+            treeObjects.push(treeClone);
+        }
+    });
+}
+
+function resetTree(scene) {
+    treeObjects.forEach(obj => scene.remove(obj));
+    treeObjects = [];
 }
