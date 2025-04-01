@@ -330,12 +330,9 @@ export function triggerInSceneWarp(scene, camera, duration = 3000) {
 
 
     animateWarp();
-    console.log(currentAudio);
-    if (currentAudio) {
-        const audio = new Audio('./audio/warp.mp3');
-        audio.volume = 0.8;
-        audio.play();
-    }
+    const audio = new Audio('./audio/warp.mp3');
+    audio.volume = 0.8;
+    audio.play();
 }
 
 function wait(ms) {
