@@ -1,4 +1,4 @@
-var currentAudio = null;
+export var currentAudio = null;
 const audioFiles = [
     "./audio/lofi-piano-beat-305563.mp3",
     "./audio/lofi-295209.mp3",

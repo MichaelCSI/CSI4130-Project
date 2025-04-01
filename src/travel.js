@@ -3,6 +3,7 @@ import waterFrag from './shaders/waterFrag';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
+import { currentAudio } from "./music.js";
 
 var shaderGeometry, shaderMaterial, shaderMesh;
 var backgroundTexture, backgroundMaterial, backgroundGeometry, backgroundMesh;
@@ -12,21 +13,24 @@ var volcanoLight;
 
 var treeObjects = [];
 
-export function updateBackground(oldBG, newBG, scene, camera) {
-    if(oldBG.localeCompare("water") == 0) {
+export async function updateBackground(oldBG, newBG, scene, camera) {
+    triggerInSceneWarp(scene, camera, 4000);
+
+    await wait(2500).then();
+    if (oldBG.localeCompare("water") == 0) {
         resetWater(scene);
     } else if (oldBG.localeCompare("tree") == 0) {
         resetTree(scene);
-    } else if(oldBG.localeCompare("fire") == 0) {
+    } else if (oldBG.localeCompare("fire") == 0) {
         resetFire(scene);
     }
 
 
-    if(newBG.localeCompare("water") == 0) {
+    if (newBG.localeCompare("water") == 0) {
         createWaterScene(scene, camera);
-    } else if(newBG.localeCompare("tree") == 0) {
+    } else if (newBG.localeCompare("tree") == 0) {
         createTreeScene(scene, camera);
-    } else if(newBG.localeCompare("fire") == 0) {
+    } else if (newBG.localeCompare("fire") == 0) {
         createFireScene(scene, camera);
     }
 }
@@ -57,7 +61,7 @@ function createWaterScene(scene, camera) {
             uColorMultiplier: { value: 5 }
         }
     });
-    
+
     // Shader Mesh creation and positioning
     shaderMesh = new THREE.Mesh(shaderGeometry, shaderMaterial);
     shaderMesh.rotation.x = -Math.PI / 1.75;
@@ -124,7 +128,7 @@ function createFireScene(scene) {
             uEmissionStrength: { value: 1.5 }
         }
     });
-    
+
     // Shader Mesh creation and positioning
     shaderMesh = new THREE.Mesh(shaderGeometry, shaderMaterial);
     shaderMesh.rotation.x = -Math.PI / 2;
@@ -154,7 +158,6 @@ function resetFire(scene) {
 }
 
 function createTreeScene(scene, camera) {
-
     const width = 80, height = 40, segmentsW = 100, segmentsH = 50;
     const groundGeo = new THREE.PlaneGeometry(width, height, segmentsW, segmentsH);
 
@@ -228,6 +231,116 @@ function resetTree(scene) {
     treeObjects = [];
 }
 
-function warp(scene, camera){
-    
+
+export function triggerInSceneWarp(scene, camera, duration = 3000) {
+    const trailCount = 1000;
+    const positions = new Float32Array(trailCount * 6); // 2 points per line (start and end)
+
+    const velocities = new Float32Array(trailCount);
+    const lengths = new Float32Array(trailCount); // length of the line (for control)
+
+    for (let i = 0; i < trailCount; i++) {
+        const x = (Math.random() - 0.5) * 100;
+        const y = (Math.random() - 0.5) * 100;
+        const z = Math.random() * -200 - 10;
+
+        // Head (front)
+        positions[i * 6 + 0] = x;
+        positions[i * 6 + 1] = y;
+        positions[i * 6 + 2] = z;
+
+        // Tail (back)
+        positions[i * 6 + 3] = x;
+        positions[i * 6 + 4] = y;
+        positions[i * 6 + 5] = z + 1;
+
+        velocities[i] = 3 + Math.random() * 2;
+        lengths[i] = 3 + Math.random() * 3;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+    const material = new THREE.LineBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.7,
+        linewidth: 2,
+        depthWrite: false,
+    });
+
+    const trails = new THREE.LineSegments(geometry, material);
+    scene.add(trails);
+
+    const startTime = performance.now();
+
+    function animateWarp() {
+        const now = performance.now();
+        const elapsed = now - startTime;
+        const t = Math.min(elapsed / duration, 1);
+        const speedFactor = easeInCubic(t);
+
+        const pos = geometry.attributes.position.array;
+
+        for (let i = 0; i < trailCount; i++) {
+            const vx = velocities[i] * speedFactor;
+            const len = lengths[i];
+
+            const fx = i * 6;
+            const fy = fx + 1;
+            const fz = fx + 2;
+
+            const bx = fx + 3;
+            const by = fy + 3;
+            const bz = fz + 3;
+
+            pos[fz] += vx;
+
+            const dynamicLength = len * Math.pow(speedFactor, 1.4) * 2.5;
+            pos[bz] = pos[fz] - dynamicLength;
+
+            if (pos[fz] > camera.position.z + 10) {
+                const x = (Math.random() - 0.5) * 100;
+                const y = (Math.random() - 0.5) * 100;
+                const z = -200 - Math.random() * 100;
+                pos[fx] = pos[bx] = x;
+                pos[fy] = pos[by] = y;
+                pos[fz] = z;
+                pos[bz] = z - len;
+            }
+        }
+
+        geometry.attributes.position.needsUpdate = true;
+
+        if (t < 1) {
+            requestAnimationFrame(animateWarp);
+        } else {
+            scene.remove(trails);
+            geometry.dispose();
+            material.dispose();
+            onComplete();
+        }
+    }
+
+
+    animateWarp();
+    console.log(currentAudio);
+    if (currentAudio) {
+        const audio = new Audio('./audio/warp.mp3');
+        audio.volume = 0.8;
+        audio.play();
+    }
+}
+
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+function easeInQuad(t) {
+    return t * t; // starts slow, speeds up
+}
+function easeInCubic(t) {
+    return t * t * t;
+}
+function easeInExpo(t) {
+    return t === 0 ? 0 : Math.pow(2, 10 * (t - 1));
 }

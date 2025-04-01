@@ -247,29 +247,29 @@ function init() {
 
     // Travel button (go do different locations)
     const waterLocation = menuButtons.travelButton.querySelector('.water');
-    waterLocation.onclick = () => {
-        updateBackground(currentBackground, "water", scene, camera);
+    waterLocation.onclick = async() => {
+        await updateBackground(currentBackground, "water", scene, camera);
         currentBackground = "water";
         scene.remove(planetScene);
         scene.add(sun, sunLight);
     }
     const treeLocation = menuButtons.travelButton.querySelector('.tree');
-    treeLocation.onclick = () => {
-        updateBackground(currentBackground, "tree", scene, camera);
+    treeLocation.onclick = async() => {
+        await updateBackground(currentBackground, "tree", scene, camera);
         currentBackground = "tree";
         scene.remove(planetScene);
         scene.add(sun, sunLight);
     }
     const fireLocation = menuButtons.travelButton.querySelector('.fire');
-    fireLocation.onclick = () => {
-        updateBackground(currentBackground, "fire", scene, camera);
+    fireLocation.onclick = async() => {
+        await updateBackground(currentBackground, "fire", scene, camera);
         currentBackground = "fire";
         scene.remove(planetScene, sun);
         scene.remove(sun, sunLight);
     }
     const spaceLocation = menuButtons.travelButton.querySelector('.space');
-    spaceLocation.onclick = () => {
-        updateBackground(currentBackground, "space", scene, camera);
+    spaceLocation.onclick = async() => {
+        await updateBackground(currentBackground, "space", scene, camera);
         currentBackground = "space";
         scene.add(planetScene);
         scene.add(sun, sunLight);
