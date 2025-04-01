@@ -318,7 +318,7 @@ export function triggerInSceneWarp(scene, camera, duration = 3000) {
             scene.remove(trails);
             geometry.dispose();
             material.dispose();
-            onComplete();
+            
         }
     }
 
