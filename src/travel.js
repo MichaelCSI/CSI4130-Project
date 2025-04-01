@@ -227,3 +227,7 @@ function resetTree(scene) {
     treeObjects.forEach(obj => scene.remove(obj));
     treeObjects = [];
 }
+
+function warp(scene, camera){
+    
+}
