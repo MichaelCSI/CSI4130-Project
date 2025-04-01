@@ -12,11 +12,16 @@ var volcano;
 var volcanoLight;
 
 var treeObjects = [];
+var updatingScene = false;
 
 export async function updateBackground(oldBG, newBG, scene, camera) {
+    if(updatingScene) {
+        return;
+    }
+    updatingScene = true;
     triggerInSceneWarp(scene, camera, 4000);
 
-    await wait(2500).then();
+    await wait(4000).then();
     if (oldBG.localeCompare("water") == 0) {
         resetWater(scene);
     } else if (oldBG.localeCompare("tree") == 0) {
@@ -33,6 +38,7 @@ export async function updateBackground(oldBG, newBG, scene, camera) {
     } else if (newBG.localeCompare("fire") == 0) {
         createFireScene(scene, camera);
     }
+    updatingScene = false;
 }
 
 export function animateScene(shaderTime, backgroundTime) {

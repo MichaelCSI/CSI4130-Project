@@ -17,6 +17,7 @@ var planetScene, planets;
 var ufo;
 
 var currentBackground = "space";
+var updatingBackground = false;
 var starClicked = false;
 var callAlien = false;
 
@@ -248,31 +249,47 @@ function init() {
     // Travel button (go do different locations)
     const waterLocation = menuButtons.travelButton.querySelector('.water');
     waterLocation.onclick = async() => {
-        await updateBackground(currentBackground, "water", scene, camera);
-        currentBackground = "water";
-        scene.remove(planetScene);
-        scene.add(sun, sunLight);
+        if(!updatingBackground) {
+            updatingBackground = true;
+            await updateBackground(currentBackground, "water", scene, camera);
+            currentBackground = "water";
+            scene.remove(planetScene);
+            scene.add(sun, sunLight);
+            updatingBackground = false;
+        }
     }
     const treeLocation = menuButtons.travelButton.querySelector('.tree');
     treeLocation.onclick = async() => {
-        await updateBackground(currentBackground, "tree", scene, camera);
-        currentBackground = "tree";
-        scene.remove(planetScene);
-        scene.add(sun, sunLight);
+        if(!updatingBackground) {
+            updatingBackground = true;
+            await updateBackground(currentBackground, "tree", scene, camera);
+            currentBackground = "tree";
+            scene.remove(planetScene);
+            scene.add(sun, sunLight);
+            updatingBackground = false;
+        }
     }
     const fireLocation = menuButtons.travelButton.querySelector('.fire');
     fireLocation.onclick = async() => {
-        await updateBackground(currentBackground, "fire", scene, camera);
-        currentBackground = "fire";
-        scene.remove(planetScene, sun);
-        scene.remove(sun, sunLight);
+        if(!updatingBackground) {
+            updatingBackground = true;
+            await updateBackground(currentBackground, "fire", scene, camera);
+            currentBackground = "fire";
+            scene.remove(planetScene, sun);
+            scene.remove(sun, sunLight);
+            updatingBackground = false;
+        }
     }
     const spaceLocation = menuButtons.travelButton.querySelector('.space');
     spaceLocation.onclick = async() => {
-        await updateBackground(currentBackground, "space", scene, camera);
-        currentBackground = "space";
-        scene.add(planetScene);
-        scene.add(sun, sunLight);
+        if(!updatingBackground) {
+            updatingBackground = true;
+            await updateBackground(currentBackground, "space", scene, camera);
+            currentBackground = "space";
+            scene.add(planetScene);
+            scene.add(sun, sunLight);
+            updatingBackground = false;
+        }
     }
 
     const volumeIcon = menuButtons.audioButton.querySelector('.audio');
