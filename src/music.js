@@ -1,3 +1,8 @@
+// CSI 4130, Winter 2025, Group 1
+// music.js
+// Music class to handle the toggle of background music via main menu button
+
+
 export var currentAudio = null;
 const audioFiles = [
     "./audio/lofi-piano-beat-305563.mp3",

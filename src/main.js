@@ -1,4 +1,10 @@
-﻿import * as THREE from "three";
+﻿// CSI 4130, Winter 2025, Group 1
+// main.js
+// Our main class to load the starting space scene and add button functionality
+// Also handles our main animation loop
+
+
+import * as THREE from "three";
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';

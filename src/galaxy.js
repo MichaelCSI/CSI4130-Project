@@ -1,3 +1,8 @@
+// CSI 4130, Winter 2025, Group 1
+// galaxy.js
+// Galaxy class to handle the creation of our background particle galaxy in space scene
+
+
 import * as THREE from "three";
 
 const galaxyParameters = {
@@ -8,7 +13,6 @@ const galaxyParameters = {
     spin: 1.2,
     rotationVelocity: 0.4,
     randomnessPower: 3,
-    spiralHeight: 0,
     insideColor: '#ffffff',
     outsideColor: '#ffffff'
 };
@@ -39,7 +43,7 @@ export function createGalaxy(scene, scaleX = 1, scaleY = 1, scaleZ = 1) {
         const randomZ = Math.pow(Math.random(), galaxyParameters.randomnessPower) * (Math.random() < 0.5 ? 1 : -1);
 
         positions[i3] = scaleX * Math.cos(branchAngle + spinAngle) * radius + randomX;
-        positions[i3 + 1] = scaleY * randomY + radius * galaxyParameters.spiralHeight + 3;
+        positions[i3 + 1] = scaleY * randomY + 3;
         positions[i3 + 2] = scaleZ * Math.sin(branchAngle + spinAngle) * radius + randomZ;
 
         const mixedColor = colorInside.clone();

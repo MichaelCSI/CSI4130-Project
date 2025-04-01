@@ -1,9 +1,13 @@
+// CSI 4130, Winter 2025, Group 1
+// travel.js
+// Travel class to handle different scenes accessible from travel button
+// Shaders from ./shaders folder are used here for water and lava
+
 import waterVert from './shaders/waterVert';
 import waterFrag from './shaders/waterFrag';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as THREE from 'three';
 import { ImprovedNoise } from 'three/examples/jsm/math/ImprovedNoise.js';
-import { currentAudio } from "./music.js";
 
 var shaderGeometry, shaderMaterial, shaderMesh;
 var backgroundTexture, backgroundMaterial, backgroundGeometry, backgroundMesh;
